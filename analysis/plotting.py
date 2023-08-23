@@ -1,3 +1,5 @@
+import sys
+import tkinter as tk
 from pathlib import Path
 from tkinter import Tk
 
@@ -6,14 +8,57 @@ import numpy as np
 from matplotlib.backends._backend_tk import FigureManagerTk
 
 from .configuration import CONFIG
-from .constants import (CONVERT_ACC_TO_SI, DATA_TAGS, LABELS,
-                        UI_BACKWARD_TOUCH_VIEW, UI_CALIBRATION_VIEW,
-                        UI_FORWARD_TOUCH_VIEW, UNITS, ResultType)
+from .constants import (ACC_TO_SI, DATA_TAGS, LABELS, UI_BACKWARD_TOUCH_VIEW,
+                        UI_CALIBRATION_VIEW, UI_FORWARD_TOUCH_VIEW,
+                        UI_IGNORE_PRESSES, UNITS, ResultType)
 from .data import EdoData
 from .extractionfuncs import find_calibration_indices, find_touch_indices
+from .tk_objects import InstructionWindowSingleton
+
+#
+# class InstructionWindow(metaclass=Singleton):
+#     _isclosed: bool = False
+#     _instruction_text = (
+#         "pressing 'c' = show calibration\n"
+#         "pressing '→' = show next touch\n"
+#         "pressing '←' = show previous touch)\n"
+#         "pressing 'f' = show fullscreen\n"
+#         "pressing 'ctrl+s' = save view\n"
+#         "pressing 'q' = close all view\n"
+#         "pressing any other = reset view\n"
+#     )
+#     def __init__(self, *arg, **kwargs):
+#         super(InstructionWindow, self).__init__(*arg, **kwargs)
+#         self.setupUI()
+#
+#     def setupUI(self):
+#         root = tk.Toplevel()
+#         root.title("Instruction for using EDO Analyzer")
+#         text = tk.Text(root, wrap="word", width=50, height=8, borderwidth=1)
+#         # t.tag_configure("blue", foreground="blue")
+#         text.pack(sid="top", fill="both", expand=True)
+#         text.insert("1.0", self._instruction_text)
+#         text.config(state=tk.DISABLED)
+#         tk.Button(root, text="OK", height=5, command=lambda: self.close(root)).pack()
+#
+#     @property
+#     def is_closed(self):
+#         return self._isclosed
+#
+#     @is_closed.setter
+#     def is_closed(self, val: bool):
+#         self._isclosed = val
+#
+#     def close(self, root: tk.Toplevel):
+#         self.is_closed = True
+#         root.destroy()
 
 
-def showMaximized(manager: FigureManagerTk) -> None:
+def get_manager() -> FigureManagerTk:
+    return plt.get_current_fig_manager()
+
+
+def show_maximized(manager: FigureManagerTk) -> None:
     root: Tk = manager.window
     root.state("zoomed")
     return None
@@ -21,6 +66,14 @@ def showMaximized(manager: FigureManagerTk) -> None:
 
 def annotate_label_with_name(label="FULL RANGE"):
     return f"{Path(CONFIG['filename']).name} - {label}"
+
+
+def show_instruction_window():
+    win = InstructionWindowSingleton()
+    if win.is_closed:
+        win.setupUI()
+    else:
+        win.raise_()
 
 
 def plot_time_distribution():
@@ -62,7 +115,7 @@ def plot_sensor_data(src="Accelerometer"):
             colors="k",
             label="touch",
             linestyles={"dashdot"},
-            linewidth=1.5
+            linewidth=1.5,
         )
 
         if label == "acc" and tag.lower() == "object":
@@ -73,7 +126,7 @@ def plot_sensor_data(src="Accelerometer"):
                 label="norm_acc",
             )
             ax.hlines(
-                y=eval(edo_data.config["R2P"].get("threshold")) * CONVERT_ACC_TO_SI,
+                y=eval(edo_data.config["R2P"].get("threshold")) * ACC_TO_SI,
                 xmin=time_arr[0],
                 xmax=time_arr[-1],
                 colors="k",
@@ -154,11 +207,22 @@ def orient_legend(key: str, info: dict):
 
 
 def on_key_event(event, info: dict):
-    if "shift" in event.key or "win" in event.key:
+    print(event.key)
+
+    if event.key == "f1":
+        show_instruction_window()
+        return
+
+    if any([x in event.key for x in UI_IGNORE_PRESSES]):
         return
 
     _ = [func(event.key, info) for func in [update_counter, update_suptitle, scale_axis, orient_legend]]
     plt.draw()
+
+
+def on_close_event(event):
+    for i in plt.get_fignums():
+        plt.close(plt.figure(i))
 
 
 def loop_through_views(fig: plt.Figure, axes: list[plt.Axes]):
@@ -170,12 +234,10 @@ def loop_through_views(fig: plt.Figure, axes: list[plt.Axes]):
         "calibration": find_calibration_indices(),
     }
     fig.canvas.mpl_connect("key_press_event", lambda event: on_key_event(event, info))
+    fig.canvas.mpl_connect("close_event", on_close_event)
 
 
 def stack_figures():
-    def get_manager() -> FigureManagerTk:
-        return plt.get_current_fig_manager()
-
     N_fig = len(plt.get_fignums())
     mngr = get_manager()
     screenwidth = mngr.window.winfo_screenwidth()

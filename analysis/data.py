@@ -2,27 +2,12 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from pathlib import Path
 
-
 import numpy as np
 import pandas as pd
 
 from .configuration import CONFIG
-from .constants import ResultType, DATA_TAGS, CONVERT_ACC_TO_SI
-
-"""
-Singleton implementation following method 3 as described in:
-https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
-"""
-
-ACC_TAGS = ["".join(x) for x in zip(sorted(tuple(DATA_TAGS) * 3), (' [accX]', ' [accY]', ' [accZ]') * 4)]
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from .constants import ACC_TAGS, ACC_TO_SI, ResultType
+from .singleton import Singleton
 
 
 @dataclass
@@ -33,7 +18,7 @@ class EdoData(metaclass=Singleton):
 
     def __post_init__(self):
         self.dataset = pd.read_parquet(Path(f"{CONFIG['filename']}\combined.parquet"))
-        self.dataset[ACC_TAGS] *= CONVERT_ACC_TO_SI
+        self.dataset[ACC_TAGS] *= ACC_TO_SI
 
         self.log = ConfigParser()
         self.log.read(Path(f"{CONFIG['filename']}\edo.log"))

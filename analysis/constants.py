@@ -18,6 +18,8 @@ UNITS = {
     "magnetometer": "$gauss$",
 }
 
+CONVERT_ACC_TO_SI = 9.81
+
 DATA_TAGS = ["Left Wrist", "Right Wrist", "Shoulder", "Object"]
 
 UI_FORWARD_TOUCH_VIEW = "."

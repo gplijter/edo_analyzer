@@ -1,19 +1,17 @@
 from pathlib import Path
 from tkinter import Tk
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends._backend_tk import FigureManagerTk
 
 from .configuration import CONFIG
-from .constants import (DATA_TAGS, LABELS, UI_BACKWARD_TOUCH_VIEW,
-                        UI_CALIBRATION_VIEW, UI_FORWARD_TOUCH_VIEW, UNITS,
-                        ResultType)
+from .constants import (CONVERT_ACC_TO_SI, DATA_TAGS, LABELS,
+                        UI_BACKWARD_TOUCH_VIEW, UI_CALIBRATION_VIEW,
+                        UI_FORWARD_TOUCH_VIEW, UNITS, ResultType)
 from .data import EdoData
 from .extractionfuncs import find_calibration_indices, find_touch_indices
 
-mpl.rcParams['backend'] = 'TkAgg'
 
 def showMaximized(manager: FigureManagerTk) -> None:
     root: Tk = manager.window
@@ -45,15 +43,14 @@ def plot_sensor_data(src="Accelerometer"):
     touch_indices = edo_data.fetch_markers("R2P", "touches", result_type=ResultType.INDEX)
 
     fig, axs = plt.subplots(4, 1)
-    fig.suptitle(annotate_label_with_name())
+    fig.suptitle(annotate_label_with_name(), fontsize="12", style="italic")
 
     label = LABELS[src.lower()]
     unit = UNITS[src.lower()]
 
     axs_flattened = axs.flatten()
     for count, (ax, tag) in enumerate(zip(axs_flattened, DATA_TAGS)):
-        ax.set_title(f"{tag} - {src}")
-        ax.sharex(axs_flattened[0])
+        ax.set_title(f"{tag} - {src}", fontweight="bold")
 
         ax.plot(time_arr, edo_data.dataset[f"{tag} [{label}X]"], "r", label=f"{label}X")
         ax.plot(time_arr, edo_data.dataset[f"{tag} [{label}Y]"], "g", label=f"{label}Y")
@@ -65,6 +62,7 @@ def plot_sensor_data(src="Accelerometer"):
             colors="k",
             label="touch",
             linestyles={"dashdot"},
+            linewidth=1.5
         )
 
         if label == "acc" and tag.lower() == "object":
@@ -75,7 +73,7 @@ def plot_sensor_data(src="Accelerometer"):
                 label="norm_acc",
             )
             ax.hlines(
-                y=eval(edo_data.config["R2P"].get("threshold")),
+                y=eval(edo_data.config["R2P"].get("threshold")) * CONVERT_ACC_TO_SI,
                 xmin=time_arr[0],
                 xmax=time_arr[-1],
                 colors="k",
@@ -83,22 +81,16 @@ def plot_sensor_data(src="Accelerometer"):
                 linestyles={"dashed"},
             )
 
-        # if label == "mag" and tag.lower() == "object":
-        #     ax.plot(
-        #         time_arr,
-        #         edo_data.object_norm(label),
-        #         "k",
-        #         label="norm_mag",
-        #     )
-
+        ax.sharex(axs_flattened[0])
         ax.set(ylabel=f"--> {unit}")
+        ax.yaxis.set_label_coords(-0.06, 0.5)
         ax.grid()
         ax.legend(loc="upper left")
         if count > 2:
             ax.set(xlabel="Time (sec)")
 
     # showMaximized(plt.get_current_fig_manager())
-    fig.subplots_adjust(left=0.16, right=0.97, top=0.93, bottom=0.06, hspace=0.25)
+    fig.subplots_adjust(left=0.09, bottom=0.04, right=0.99, top=0.94, hspace=0.21)
     return fig, axs_flattened
 
 
@@ -152,11 +144,20 @@ def scale_axis(key: str, info: dict) -> None:
         ax.set_ylim(y_data.min() * 1.1, y_data.max() * 1.1)
 
 
+def orient_legend(key: str, info: dict):
+    for ax in info["axes"]:
+        ax.legend(loc="best")
+        if key == UI_BACKWARD_TOUCH_VIEW or key == UI_FORWARD_TOUCH_VIEW:
+            ax.legend(loc="upper right")
+        elif key == UI_CALIBRATION_VIEW:
+            ax.legend(loc="upper left")
+
+
 def on_key_event(event, info: dict):
     if "shift" in event.key or "win" in event.key:
         return
 
-    _ = [func(event.key, info) for func in [update_counter, update_suptitle, scale_axis]]
+    _ = [func(event.key, info) for func in [update_counter, update_suptitle, scale_axis, orient_legend]]
     plt.draw()
 
 

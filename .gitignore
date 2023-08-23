@@ -159,3 +159,5 @@ cython_debug/
 .idea/
 /ac4s_datasets/
 /poetry.lock
+/builds/
+/ABOUT

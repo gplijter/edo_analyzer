@@ -16,14 +16,14 @@ class InstructionWindowTk(tk.Toplevel):
 class InstructionWindowSingleton(metaclass=Singleton):
     _isclosed: bool = False
     _instruction_text = (
-        "press 'c' to show calibration\n"
-        "press '→' to show next touch\n"
-        "press '←' to show previous touch\n"
+        "press 'c' to show calibration data\n"
+        "press '→' to show next reach attempt\n"
+        "press '←' to show previous reach attempt\n"
         "press 'ctrl+s' to save view\n"
         "press 'ctrl+f' or 'esc' to toggle fullscreen\n"
         "press 'q' to close all views\n"
         "press any other key to reset view to FULL RANGE\n"
-        "press 'F1' to show instruction\n"
+        "press 'F1' to show this instruction\n"
     )
 
     def __init__(self):

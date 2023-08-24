@@ -96,7 +96,7 @@ def plot_sensor_data(src="Accelerometer"):
     touch_indices = edo_data.fetch_markers("R2P", "touches", result_type=ResultType.INDEX)
 
     fig, axs = plt.subplots(4, 1)
-    fig.suptitle(annotate_label_with_name(), fontsize="12", style="italic")
+    fig.suptitle(annotate_label_with_name(), style="italic")
 
     label = LABELS[src.lower()]
     unit = UNITS[src.lower()]
@@ -173,11 +173,11 @@ def get_start_stop_view(key: str, info: dict) -> tuple:
 
 
 def update_suptitle(key: str, info: dict) -> None:
-    info["fig"].suptitle(annotate_label_with_name())
+    info["fig"].suptitle(annotate_label_with_name(), style="italic")
     if key == UI_BACKWARD_TOUCH_VIEW or key == UI_FORWARD_TOUCH_VIEW:
-        info["fig"].suptitle(annotate_label_with_name(f"TOUCH #{info['counter'] + 1}"))
+        info["fig"].suptitle(annotate_label_with_name(f"TOUCH #{info['counter'] + 1}"), style="italic")
     elif key == UI_CALIBRATION_VIEW:
-        info["fig"].suptitle(annotate_label_with_name("CALIBRATION"))
+        info["fig"].suptitle(annotate_label_with_name("CALIBRATION"), style="italic")
     return None
 
 
@@ -207,8 +207,6 @@ def orient_legend(key: str, info: dict):
 
 
 def on_key_event(event, info: dict):
-    print(event.key)
-
     if event.key == "f1":
         show_instruction_window()
         return

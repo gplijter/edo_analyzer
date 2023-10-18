@@ -8,8 +8,7 @@ from analysis.plotting import (loop_through_views, plot_sensor_data,
                                plot_time_distribution, plt,
                                show_instruction_window, stack_figures)
 
-# CONFIG["filename"] = r"ac4s_datasets/20230815_143348_results_healthy"
-
+CONFIG["filename"] = r"ac4s_datasets/20230815_143348_results_healthy"
 
 def main():
     if CONFIG["filename"] == "":
@@ -22,9 +21,10 @@ def main():
         print(f"No valid dataset found. ({CONFIG['filename']})")
         return
 
-    edoData.printInfo()
+    edoData.print_info()
 
     # plot_time_distribution()
+    # plot_sensor_data("Accelerometer")
     loop_through_views(*plot_sensor_data("Accelerometer"))
     loop_through_views(*plot_sensor_data("Gyroscope"))
     loop_through_views(*plot_sensor_data("Magnetometer"))

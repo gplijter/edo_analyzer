@@ -1,5 +1,6 @@
 import sys
-import tkinter as tk
+import base64
+from io import BytesIO
 from pathlib import Path
 from tkinter import Tk
 
@@ -205,6 +206,12 @@ def orient_legend(key: str, info: dict):
         elif key == UI_CALIBRATION_VIEW:
             ax.legend(loc="upper left")
 
+def print_fig_as_base64():
+    buf = BytesIO()
+    plt.gcf().savefig(buf, format="png")
+    # Embed the result in the html output.
+    data = base64.b64encode(buf.getbuffer()).decode("ascii")
+
 
 def on_key_event(event, info: dict):
     if event.key == "f1":
@@ -247,3 +254,5 @@ def stack_figures():
         mngr = get_manager()
         mngr.window.geometry(f"{screenwidth_fig}x{screenheight - 80}+{x_pos}+0")
         x_pos += screenwidth_fig
+
+

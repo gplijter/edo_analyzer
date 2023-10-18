@@ -28,7 +28,7 @@ class EdoData(metaclass=Singleton):
 
         self.name = Path(f"{CONFIG['filename']}").name
 
-    def printInfo(self):
+    def print_info(self):
         print(
             f"t_measured)\t\t{(self.dataset['Timestamp'].iloc[-1] - self.dataset['Timestamp'].iloc[0]) / 1000:10.2f} sec"
         )
